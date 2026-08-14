@@ -1,2 +1,2 @@
 # Truthify
-Open-source runtime execution integrity platform for AI agents. Cross-references natural language claims against raw machine execution receipts (APIs, SQL, MCP) in real time to eliminate false success claims and silent errors via in-scratchpad self-correction.
+OOpen-source Python SDK for AI agent execution integrity. Intercepts tool calls, generates HMAC execution receipts, and verifies raw API ground truth against natural-language claims in real time to prevent false success reports and silent errors via in-scratchpad reprompting.
