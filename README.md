@@ -110,19 +110,23 @@ Truthify/
 
 ## 📦 Runnable Examples
 
-Check out the [`examples/`](examples/) directory:
+Check out the [`examples/`](examples/) directory for production-ready, runnable scripts:
 
-- **Run Basic Tool Auditing**:
+- **[`01_basic_audit_tool.py`](examples/01_basic_audit_tool.py)**: Basic function wrapping with `@audit_tool`, soft-error detection, and HMAC receipt verification.
   ```bash
   uv run python examples/01_basic_audit_tool.py
   ```
-- **Run MCP Client Interceptor**:
+- **[`02_mcp_client_interceptor.py`](examples/02_mcp_client_interceptor.py)**: Model Context Protocol (MCP) tool server auditing via `MCPClientProxy`.
   ```bash
   uv run python examples/02_mcp_client_interceptor.py
   ```
-- **Run Live Local Ollama Agent with Real-Time Self-Correction**:
+- **[`03_live_local_agent.py`](examples/03_live_local_agent.py)**: 100% Local Autonomous Agent using Ollama (`qwen3:latest` primary + `qwen2.5:0.5b` SLM judge) with a real SQLite database on disk.
   ```bash
-  uv run python examples/03_live_ollama_agent.py
+  uv run python examples/03_live_local_agent.py
+  ```
+- **[`04_live_gemini_agent.py`](examples/04_live_gemini_agent.py)**: Cloud Autonomous Agent using Google Gemini (`gemini-flash-latest`) + Local 8B SLM Judge (`qwen3:latest`) with a real SQLite database on disk.
+  ```bash
+  uv run python examples/04_live_gemini_agent.py
   ```
 
 ---

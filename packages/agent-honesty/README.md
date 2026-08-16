@@ -148,11 +148,12 @@ print(result.delivered_claim)
 ---
 
 ## 📦 Examples
-
-Runnable real-world examples are available in the [`examples/`](https://github.com/Arya-GITh/Truthify/tree/main/examples) directory:
-- [`01_basic_audit_tool.py`](https://github.com/Arya-GITh/Truthify/blob/main/examples/01_basic_audit_tool.py): Basic tool wrapping and receipt verification.
-- [`02_mcp_client_interceptor.py`](https://github.com/Arya-GITh/Truthify/blob/main/examples/02_mcp_client_interceptor.py): Model Context Protocol (MCP) tool server auditing.
-- [`03_live_ollama_agent.py`](https://github.com/Arya-GITh/Truthify/blob/main/examples/03_live_ollama_agent.py): Live end-to-end ReAct agent with local Ollama (`qwen3:latest`) and live self-correction.
+ 
+ Runnable real-world examples are available in the [`examples/`](https://github.com/Arya-GITh/Truthify/tree/main/examples) directory:
+ - [`01_basic_audit_tool.py`](https://github.com/Arya-GITh/Truthify/blob/main/examples/01_basic_audit_tool.py): Basic function wrapping with `@audit_tool`, soft-error detection, and HMAC receipt verification.
+ - [`02_mcp_client_interceptor.py`](https://github.com/Arya-GITh/Truthify/blob/main/examples/02_mcp_client_interceptor.py): Model Context Protocol (MCP) JSON-RPC tool server proxy auditing.
+ - [`03_live_local_agent.py`](https://github.com/Arya-GITh/Truthify/blob/main/examples/03_live_local_agent.py): 100% Local Autonomous Agent using Ollama (`qwen3:latest` primary + `qwen2.5:0.5b` SLM judge) with a real SQLite database on disk.
+ - [`04_live_gemini_agent.py`](https://github.com/Arya-GITh/Truthify/blob/main/examples/04_live_gemini_agent.py): Cloud Autonomous Agent using Google Gemini (`gemini-flash-latest`) + Local 8B SLM Judge (`qwen3:latest`) with a real SQLite database on disk.
 
 ---
 
