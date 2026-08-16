@@ -4,9 +4,15 @@ on:
   push:
     tags:
       - "v*"
+      - "agent-honesty-v*"
+      - "agent-honesty-adapters-v*"
+      - "deceptionbench-v*"
+      - "agent-honesty-sandbox-v*"
+      - "agent-honesty-interp-v*"
 
 jobs:
-  build-and-publish:
+  publish-agent-honesty:
+    if: startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/agent-honesty-v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,12 +27,12 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Build Package Wheel and Tarball
+      - name: Build agent-honesty
         run: |
           cd packages/agent-honesty
           uv build
 
-      - name: Publish to PyPI
+      - name: Publish agent-honesty to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: packages/agent-honesty/dist/

@@ -1,160 +1,161 @@
-# Truthify: Execution Integrity & Trajectory Authenticity Platform
-
-<div align="center">
+# Truthify
 
 [![PyPI Version](https://img.shields.io/pypi/v/agent-honesty.svg)](https://pypi.org/project/agent-honesty/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/agent-honesty.svg)](https://pypi.org/project/agent-honesty/)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![CI Tests](https://github.com/Arya-GITh/Truthify/actions/workflows/ci.yml/badge.svg)](https://github.com/Arya-GITh/Truthify/actions)
 
-**Open-source governance middleware that guarantees AI agents never lie, fabricate data on empty returns, or conceal tool execution failures.**
+**Execution Integrity and Trajectory Authenticity Governance Platform for Autonomous AI Agents**
 
-[Quickstart](#-quickstart) • [Architecture](#-architecture) • [Examples](#-runnable-examples) • [Roadmap](#-milestone-roadmap) • [Documentation](packages/agent-honesty/README.md)
-
-</div>
+Truthify is an open-source security and governance framework designed to eliminate the **Execution-Claim Gap** in autonomous LLM agent systems. It enforces cryptographic verification over tool and API execution trajectories, preventing models from hallucinating false success, fabricating data on empty returns, or concealing runtime failures.
 
 ---
 
-## 🌟 Overview
+## The Problem: The Execution-Claim Gap
 
-Autonomous AI agents frequently experience silent runtime failures when calling tools, APIs, and databases:
-* **The database deadlocks (500 Error)** $\rightarrow$ The LLM hallucinates: *"Your transaction is confirmed!"*
-* **The search query returns 0 rows (`[]`)** $\rightarrow$ The LLM invents fake accounts or numbers.
-* **The API returns a soft-failure (`{"status": "error"}`)** $\rightarrow$ The LLM misinterprets it as success.
+When autonomous AI agents interact with external tools, APIs, and databases, systemic failures frequently occur at the execution boundary:
 
-Traditional text guardrails are **blind** to execution reality because the LLM's English response looks polite, fluent, and convincing.
+1. **False Success Invariance**: An API returns an HTTP 500 error, transaction deadlock, or timeout, but the model drafts a confirmation asserting successful execution.
+2. **Empty Return Fabrication**: A database query returns 0 matching rows (`[]`), but the model hallucinates specific records, account identifiers, or entity states.
+3. **Soft-Failure Blindness**: An API returns an HTTP 200 containing an application error payload (`{"status": "error", "code": 403}`), which the model misinterprets as an operational success.
+4. **Parameter Taint & Mutation**: The model executes a mutating tool with parameters that deviate from prompt constraints without user authorization.
 
-**Truthify (`agent-honesty`)** operates at the **machine execution boundary**: capturing cryptographic HMAC-SHA256 receipts from raw OS/network returns, cross-examining agent claims via a Two-Tier verification engine, and forcing in-scratchpad self-corrections live before deceptive tokens reach the user.
+Traditional text guardrails evaluate only lexical strings and are incapable of verifying physical machine state. Naive LLM-as-a-Judge architectures double inference costs, introduce multi-second latency, and remain susceptible to linguistic hallucination.
+
+Truthify operates at the **machine execution boundary**, capturing unalterable cryptographic execution receipts and cross-examining model assertions prior to client release.
 
 ---
 
-## ⚡ Quickstart
+## Core Architecture
 
-### 1. Installation
+Truthify implements a four-stage execution integrity pipeline:
+
+```
++-------------------+      +-------------------+      +-------------------------+      +-------------------------+
+|  Tool Interceptor | ---> | Cryptographic Log | ---> |  Two-Tier Verification  | ---> | Gated Stream & Actions  |
+|  (@audit_tool /   |      | (HMAC-SHA256 &    |      |  (Tier 1 Deterministic  |      | (Token buffer, N=2 Cap, |
+|   MCPClientProxy) |      |  FactMatrix)      |      |   + Tier 2 Semantic SLM)|      |  Deterministic Fallback)|
++-------------------+      +-------------------+      +-------------------------+      +-------------------------+
+```
+
+### 1. Interception & Normalization Layer
+* **`@audit_tool`**: In-process Python decorator capturing input arguments, return objects, exceptions, and execution latency.
+* **`MCPClientProxy`**: Protocol proxy for Model Context Protocol (MCP) JSON-RPC clients.
+* **`PayloadNormalizer`**: Analyzes response structures, extracting normalized execution parameters (`is_error`, `status_code`, `records_mutated`, `is_empty`).
+
+### 2. Cryptographic Machine Receipts
+* Generates an unforgeable **`HMACReceipt`** signed with HMAC-SHA256 over canonical JSON representations of the normalized `FactMatrix`. Receipts cannot be altered by in-context prompt injections.
+
+### 3. Two-Tier Verification Waterfall
+* **Tier 1 (Deterministic Engine, <0.5 ms, $0 Token Cost)**: Evaluates strict mathematical and boolean invariants directly against signed receipts. Resolves binary execution contradictions instantly without neural inference.
+* **Tier 2 (Semantic SLM Auditor, ~50 ms)**: Evaluates arithmetic operations, paraphrased claims, and entity alias mappings using a fast Small Language Model (e.g., Qwen 2.5 0.5B, Phi 3.5, or Claude Haiku).
+
+### 4. Gated Streaming & Self-Correction Engine
+* **Dual-Channel Token Gating**: Buffers streaming output for state-mutating actions, releasing tokens only upon verification.
+* **In-Scratchpad Self-Correction ($N=2$ Hard Cap)**: Injects targeted corrective feedback into the agent's reasoning scratchpad upon deception detection.
+* **Deterministic Fallback Override**: Automatically synthesizes verified ground-truth summaries directly from the `FactMatrix` if the model fails to self-correct after 2 attempts.
+
+---
+
+## Monorepo Packages
+
+| Package | Version | Description | Path |
+| :--- | :---: | :--- | :--- |
+| **`agent-honesty`** | `0.1.0` | Core SDK: Interceptors, HMAC Receipts, Two-Tier Verification, and Action Handlers | [`packages/agent-honesty`](packages/agent-honesty) |
+| **`agent-honesty-adapters`** | `0.1.0` *(Milestone 2)* | Middleware integrations for LangGraph, CrewAI, AutoGen, and LlamaIndex | `packages/agent-honesty-adapters` |
+| **`deceptionbench`** | `1.0.0` *(Milestone 3)* | Standardized evaluation benchmark suite with 100+ deceptive trajectory test cases | `packages/deceptionbench` |
+| **`agent-honesty-sandbox`** | `0.1.0` *(Milestone 4)* | Ephemeral copy-on-write sandboxing for speculative execution gating | `packages/agent-honesty-sandbox` |
+| **`agent-honesty-interp`** | `0.1.0` *(Milestone 5)* | Mechanistic interpretability probes for hidden-state deception detection | `packages/agent-honesty-interp` |
+
+---
+
+## Quickstart
+
+### Installation
 
 ```bash
 pip install agent-honesty
 ```
 
-### 2. Basic Example
+### Basic Function Auditing
 
 ```python
 from agent_honesty import audit_tool, HonestyAuditor, VerificationRouter
 
 @audit_tool(name="transfer_funds")
 def transfer_funds(sender: str, recipient: str, amount: float):
-    # Simulated API failure:
-    return {"status": "error", "error_code": "DB_DEADLOCK_500", "message": "Deadlock detected."}
+    # Simulated backend failure:
+    return {"status": "error", "error_code": "DB_DEADLOCK_500", "message": "Transaction aborted."}
 
 with HonestyAuditor() as auditor:
-    # Tool executes and generates an unforgeable HMAC-SHA256 receipt:
-    transfer_funds("alice", "bob", 150.0)
+    # 1. Execute audited tool (generates signed HMAC receipt)
+    transfer_funds("acc_alice", "acc_bob", 150.0)
     
-    # What the agent tries to say:
-    agent_claim = "Your transfer was successfully completed and confirmed!"
+    # 2. Model drafts response
+    agent_claim = "Your transfer of $150 has been completed successfully."
     
-    # Cross-examine against machine truth in <0.1ms:
+    # 3. Verify claim against machine truth in <0.5ms
     router = VerificationRouter()
-    verdict = router.verify("Transfer $150 from Alice to Bob", agent_claim, auditor.receipts)
+    verdict = router.verify(
+        user_prompt="Transfer $150 from Alice to Bob",
+        agent_claim=agent_claim,
+        receipts=auditor.receipts,
+    )
     
-    print(verdict.is_honest)       # False
-    print(verdict.deception_type)  # DeceptionType.FALSE_SUCCESS
-    print(verdict.explanation)     # "Deterministic False Success: Step 'transfer_funds' failed with DB_DEADLOCK_500..."
+    print(f"Is Honest: {verdict.is_honest}")            # False
+    print(f"Deception Type: {verdict.deception_type}")  # DeceptionType.FALSE_SUCCESS
+    print(f"Latency: {verdict.latency_ms:.2f} ms")      # 0.31 ms
 ```
 
 ---
 
-## 🏛️ Architecture & Verification Waterfall
+## Runnable Examples
 
-```
-                               THE AGENT-HONESTY PIPELINE
-                               
-   1. Execution Boundary   2. Ground Truth       3. Two-Tier Verification       4. Gated Streaming & Action
-┌─────────────────────┐  ┌──────────────────┐  ┌───────────────────────────┐  ┌───────────────────────────┐
-│ • @audit_tool       │  │ • Normalized     │  │ • Tier 1: Invariant Rules │  │ • Gated Token Buffer      │
-│ • MCPClientProxy    │─>│   FactMatrix     │─>│   (<0.1ms, $0 token cost) │─>│ • In-Scratchpad Reprompt  │
-│ (Catches raw return)│  │ • HMAC-SHA256    │  │ • Tier 2: Semantic SLM   │  │   (N=2 Hard Limit)        │
-│                     │  │   Signed Receipt │  │   (~50ms, Language/Math)  │  │ • Deterministic Fallback  │
-└─────────────────────┘  └──────────────────┘  └───────────────────────────┘  └───────────────────────────┘
-```
+The [`examples/`](examples/) directory contains standalone, reproducible implementations:
 
-1. **Tier 1 (Deterministic Rule Engine)**: Sub-millisecond rule matcher evaluating strict mathematical invariants directly against the `FactMatrix` in **$<0.1\text{ms}$ at $\$0$ token cost** (resolving ~80% of calls instantly).
-2. **Tier 2 (Fast Semantic SLM Auditor)**: Evaluates natural language nuances, prompt arithmetic (`5300-2000 = 3300`), and entity alias mappings using a fast local SLM (Qwen2.5 / Phi-3.5) or cloud endpoint (Claude Haiku / GPT-4o-mini).
+* **[`01_basic_audit_tool.py`](examples/01_basic_audit_tool.py)**: Basic function wrapping with `@audit_tool`, soft-error detection, and HMAC receipt verification.
+* **[`02_mcp_client_interceptor.py`](examples/02_mcp_client_interceptor.py)**: Model Context Protocol (MCP) JSON-RPC tool server proxy auditing via `MCPClientProxy`.
+* **[`03_live_local_agent.py`](examples/03_live_local_agent.py)**: Autonomous local agent using Ollama (`qwen3:latest` primary + `qwen2.5:0.5b` SLM judge) with a live SQLite database.
+* **[`04_live_gemini_agent.py`](examples/04_live_gemini_agent.py)**: Autonomous cloud agent using Google Gemini (`gemini-flash-latest`) + local 8B SLM judge with a live SQLite database.
 
 ---
 
-## 📂 Monorepo Packages & Layout
-
-```
-Truthify/
-├── packages/
-│   ├── agent-honesty/             <- 📦 Core SDK package (pip install agent-honesty) [v0.1.0]
-│   │   ├── src/agent_honesty/
-│   │   │   ├── interceptors/      <- @audit_tool, HonestyAuditor, MCPClientProxy
-│   │   │   ├── receipts/          <- FactMatrix, PayloadNormalizer, HMACReceipt
-│   │   │   ├── verifiers/         <- Tier 1 Deterministic, Tier 2 Semantic SLM, Router
-│   │   │   ├── actions/           <- SelfCorrectionLoop, Fallback Override, Policies
-│   │   │   └── streaming/         <- DualChannelStreamManager
-│   │   ├── pyproject.toml         <- Package configuration & PyPI metadata
-│   │   └── README.md              <- Dedicated SDK documentation (pypi.org/project/agent-honesty)
-│   ├── agent-honesty-adapters/    <- 📦 Milestone 2 (LangGraph, CrewAI, AutoGen adapters)
-│   ├── deceptionbench/            <- 📦 Milestone 3 (100+ agent benchmark suite)
-│   ├── agent-honesty-sandbox/     <- 📦 Milestone 4 (Ephemeral speculative sandboxing)
-│   └── agent-honesty-interp/      <- 📦 Milestone 5 (Neural activation interpretability probes)
-├── examples/                      <- 🚀 Runnable real-world scripts
-│   ├── 01_basic_audit_tool.py     <- Basic tool wrapping & receipt verification
-│   ├── 02_mcp_client_interceptor.py <- Model Context Protocol (MCP) tool auditing
-│   ├── 03_live_local_agent.py     <- Local Ollama agent + SQLite on disk
-│   └── 04_live_gemini_agent.py    <- Cloud Gemini agent + SQLite on disk
-├── harness/                       <- Mock MCP server & Reference ReAct agent
-├── tests/                         <- 40-test automated verification test suite
-└── .github/workflows/             <- Automated CI/CD & PyPI publishing
-```
-
----
-
-## 📦 Runnable Examples
-
-Check out the [`examples/`](examples/) directory for production-ready, runnable scripts:
-
-- **[`01_basic_audit_tool.py`](examples/01_basic_audit_tool.py)**: Basic function wrapping with `@audit_tool`, soft-error detection, and HMAC receipt verification.
-  ```bash
-  uv run python examples/01_basic_audit_tool.py
-  ```
-- **[`02_mcp_client_interceptor.py`](examples/02_mcp_client_interceptor.py)**: Model Context Protocol (MCP) tool server auditing via `MCPClientProxy`.
-  ```bash
-  uv run python examples/02_mcp_client_interceptor.py
-  ```
-- **[`03_live_local_agent.py`](examples/03_live_local_agent.py)**: 100% Local Autonomous Agent using Ollama (`qwen3:latest` primary + `qwen2.5:0.5b` SLM judge) with a real SQLite database on disk.
-  ```bash
-  uv run python examples/03_live_local_agent.py
-  ```
-- **[`04_live_gemini_agent.py`](examples/04_live_gemini_agent.py)**: Cloud Autonomous Agent using Google Gemini (`gemini-flash-latest`) + Local 8B SLM Judge (`qwen3:latest`) with a real SQLite database on disk.
-  ```bash
-  uv run python examples/04_live_gemini_agent.py
-  ```
-
----
-
-## 🗺️ Milestone Roadmap
+## Roadmap
 
 - [x] **Milestone 1: Core Engine & SDK (`agent-honesty v0.1.0`)**
-  - Tool Decorator & Context Isolation (`@audit_tool`, `HonestyAuditor`)
-  - Payload Schema Normalizer & HMAC-SHA256 Receipt Engine
-  - MCP Interceptor Proxy & Multi-Persona ReAct Harness
+  - Tool Decorators, Context Isolation, and MCP Proxy Interception
+  - Normalized `FactMatrix` & HMAC-SHA256 Cryptographic Receipts
   - Two-Tier Verification Engine (Tier 1 Deterministic + Tier 2 Semantic SLM)
-  - Dual-Channel Streaming & In-Scratchpad Self-Correction with $N=2$ Hard Cap
-- [ ] **Milestone 2: Multi-Framework Adapters**
-  - LangGraph, AutoGen, CrewAI, and LlamaIndex middleware hooks.
-- [ ] **Milestone 3: `DeceptionBench` & Industry Evaluation Suite**
-  - 100+ flaky, soft-failing, and malicious tool benchmark testbed.
-- [ ] **Milestone 4: Speculative Execution Sandbox (`agent-honesty-sandbox`)**
-  - Isolated ephemeral copy-on-write containers for pre-executing risky tools.
-- [ ] **Milestone 5: Mechanistic Interpretability Probes (`agent-honesty-interp`)**
-  - Neural hidden-state probing for internal deception detection.
+  - Dual-Channel Streaming, $N=2$ Scratchpad Reprompting, and Fallback Overrides
+- [ ] **Milestone 2: Multi-Framework Adapters (`agent-honesty-adapters`)**
+  - Native integration hooks for LangGraph, CrewAI, AutoGen, and LlamaIndex
+- [ ] **Milestone 3: Evaluation Suite (`deceptionbench`)**
+  - Standardized benchmark with 100+ failure modes, soft-errors, and deceptive trajectories
+- [ ] **Milestone 4: Speculative Sandboxing (`agent-honesty-sandbox`)**
+  - Isolated ephemeral copy-on-write environments for pre-execution action gating
+- [ ] **Milestone 5: Mechanistic Probing (`agent-honesty-interp`)**
+  - Neural activation probes for internal representation monitoring
 
 ---
 
-## 📄 License
+## Development
 
-Apache 2.0 License. See [LICENSE](LICENSE) for details.
+Truthify uses `uv` for workspace package management:
+
+```bash
+# Clone the repository
+git clone https://github.com/Arya-GITh/Truthify.git
+cd Truthify
+
+# Install dependencies across all workspace packages
+uv sync --all-packages
+
+# Run the full test suite
+uv run pytest
+```
+
+---
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE) for full details.
