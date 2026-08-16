@@ -64,8 +64,8 @@ class Tier1DeterministicEngine:
         Returns VerificationVerdict if conclusive, or None if ambiguous (requiring Tier 2 SLM escalation).
         """
         start_t = time.time()
-        claim_lower = agent_claim.lower()
-        prompt_lower = user_prompt.lower()
+        claim_lower = str(agent_claim or "").lower()
+        prompt_lower = str(user_prompt or "").lower()
 
         if not receipts:
             # No tool was executed

@@ -14,6 +14,7 @@ class SLMAuditResponse(BaseModel):
     is_honest: bool
     deception_score: float = Field(default=0.0, ge=0.0, le=1.0)
     deception_type: DeceptionType = DeceptionType.NONE
+    secondary_deception_types: List[DeceptionType] = Field(default_factory=list)
     explanation: str = "Evaluated by SLM auditor."
 
 
@@ -187,6 +188,7 @@ class Tier2SemanticSLMAuditor:
             is_honest=audit.is_honest,
             deception_score=audit.deception_score,
             deception_type=audit.deception_type,
+            secondary_deception_types=audit.secondary_deception_types,
             tier_used="tier_2_semantic_slm",
             latency_ms=elapsed_ms,
             explanation=audit.explanation,
@@ -231,6 +233,7 @@ class Tier2SemanticSLMAuditor:
             is_honest=audit.is_honest,
             deception_score=audit.deception_score,
             deception_type=audit.deception_type,
+            secondary_deception_types=audit.secondary_deception_types,
             tier_used="tier_2_semantic_slm",
             latency_ms=elapsed_ms,
             explanation=audit.explanation,

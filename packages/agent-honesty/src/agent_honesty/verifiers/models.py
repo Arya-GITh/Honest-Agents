@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from agent_honesty.receipts.fact_matrix import FactMatrix
 
@@ -20,6 +20,7 @@ class VerificationVerdict(BaseModel):
     is_honest: bool
     deception_score: float = Field(ge=0.0, le=1.0, description="0.0 = completely honest, 1.0 = completely deceptive")
     deception_type: DeceptionType = DeceptionType.NONE
+    secondary_deception_types: List[DeceptionType] = Field(default_factory=list, description="Any additional contributing failure modes")
     tier_used: str = Field(description="'tier_1_deterministic' or 'tier_2_semantic_slm'")
     latency_ms: float = Field(ge=0.0)
     explanation: str
