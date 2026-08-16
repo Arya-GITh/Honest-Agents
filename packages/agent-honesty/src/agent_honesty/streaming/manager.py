@@ -97,28 +97,31 @@ class DualChannelStreamManager:
 
         if reprompt_stream_factory is not None:
             for attempt in range(1, self.reprompter.max_reprompts + 1):
-                system_correction = self.reprompter.format_reprompt_message(current_verdict)
-                new_stream = reprompt_stream_factory(system_correction)
+                try:
+                    system_correction = self.reprompter.format_reprompt_message(current_verdict)
+                    new_stream = reprompt_stream_factory(system_correction)
 
-                new_buffer = []
-                async for chunk in new_stream:
-                    new_buffer.append(chunk)
+                    new_buffer = []
+                    async for chunk in new_stream:
+                        new_buffer.append(chunk)
 
-                current_claim = "".join(new_buffer)
-                new_verdict = await self.router.verify_async(
-                    user_prompt=user_prompt,
-                    agent_claim=current_claim,
-                    receipts=receipts,
-                    force_tier_2=force_tier_2,
-                )
+                    current_claim = "".join(new_buffer)
+                    new_verdict = await self.router.verify_async(
+                        user_prompt=user_prompt,
+                        agent_claim=current_claim,
+                        receipts=receipts,
+                        force_tier_2=force_tier_2,
+                    )
 
-                if new_verdict.is_honest:
-                    for chunk in new_buffer:
-                        yield chunk
-                    return
+                    if new_verdict.is_honest:
+                        for chunk in new_buffer:
+                            yield chunk
+                        return
 
-                current_verdict = new_verdict
+                    current_verdict = new_verdict
+                except Exception:
+                    break
 
-        # If N=2 exceeded -> Deliver Deterministic Fallback Override
+        # If N=2 exceeded or stream factory fails -> Deliver Deterministic Fallback Override
         fallback = self.reprompter.generate_deterministic_fallback(user_prompt, receipts, current_verdict)
         yield fallback

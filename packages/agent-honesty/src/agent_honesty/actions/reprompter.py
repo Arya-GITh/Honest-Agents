@@ -115,32 +115,36 @@ class SelfCorrectionLoop:
             for attempt in range(1, self.max_reprompts + 1):
                 system_correction = self.format_reprompt_message(current_verdict)
 
-                # Invoke the agent's LLM generation callback with the private correction
-                if inspect.iscoroutinefunction(reprompt_callback):
-                    new_claim = await reprompt_callback(system_correction)
-                else:
-                    new_claim = reprompt_callback(system_correction)
+                try:
+                    # Invoke the agent's LLM generation callback with the private correction
+                    if inspect.iscoroutinefunction(reprompt_callback):
+                        new_claim = await reprompt_callback(system_correction)
+                    else:
+                        new_claim = reprompt_callback(system_correction)
 
-                current_claim = str(new_claim or "")
+                    current_claim = str(new_claim or "")
 
-                # Verify the newly drafted response
-                new_verdict = await self.router.verify_async(
-                    user_prompt=user_prompt,
-                    agent_claim=current_claim,
-                    receipts=receipts,
-                    force_tier_2=force_tier_2,
-                )
-
-                if new_verdict.is_honest:
-                    return ActionResult(
-                        delivered_claim=current_claim,
-                        policy_applied=ActionPolicy.REPROMPT,
-                        reprompt_count=attempt,
-                        verdict=new_verdict,
-                        overridden=False,
+                    # Verify the newly drafted response
+                    new_verdict = await self.router.verify_async(
+                        user_prompt=user_prompt,
+                        agent_claim=current_claim,
+                        receipts=receipts,
+                        force_tier_2=force_tier_2,
                     )
 
-                current_verdict = new_verdict
+                    if new_verdict.is_honest:
+                        return ActionResult(
+                            delivered_claim=current_claim,
+                            policy_applied=ActionPolicy.REPROMPT,
+                            reprompt_count=attempt,
+                            verdict=new_verdict,
+                            overridden=False,
+                        )
+
+                    current_verdict = new_verdict
+                except Exception:
+                    # If reprompt LLM call fails, break and deliver deterministic fallback
+                    break
 
         # Max reprompts exceeded without self-correction -> Deterministic Fallback Override!
         fallback_claim = self.generate_deterministic_fallback(user_prompt, receipts, current_verdict)
@@ -204,28 +208,31 @@ class SelfCorrectionLoop:
             for attempt in range(1, self.max_reprompts + 1):
                 system_correction = self.format_reprompt_message(current_verdict)
 
-                if inspect.iscoroutinefunction(reprompt_callback):
-                    raise RuntimeError("Async reprompt_callback passed to synchronous execute_policy. Use execute_policy_async.")
-                new_claim = reprompt_callback(system_correction)
-                current_claim = str(new_claim or "")
+                try:
+                    if inspect.iscoroutinefunction(reprompt_callback):
+                        raise RuntimeError("Async reprompt_callback passed to synchronous execute_policy. Use execute_policy_async.")
+                    new_claim = reprompt_callback(system_correction)
+                    current_claim = str(new_claim or "")
 
-                new_verdict = self.router.verify(
-                    user_prompt=user_prompt,
-                    agent_claim=current_claim,
-                    receipts=receipts,
-                    force_tier_2=force_tier_2,
-                )
-
-                if new_verdict.is_honest:
-                    return ActionResult(
-                        delivered_claim=current_claim,
-                        policy_applied=ActionPolicy.REPROMPT,
-                        reprompt_count=attempt,
-                        verdict=new_verdict,
-                        overridden=False,
+                    new_verdict = self.router.verify(
+                        user_prompt=user_prompt,
+                        agent_claim=current_claim,
+                        receipts=receipts,
+                        force_tier_2=force_tier_2,
                     )
 
-                current_verdict = new_verdict
+                    if new_verdict.is_honest:
+                        return ActionResult(
+                            delivered_claim=current_claim,
+                            policy_applied=ActionPolicy.REPROMPT,
+                            reprompt_count=attempt,
+                            verdict=new_verdict,
+                            overridden=False,
+                        )
+
+                    current_verdict = new_verdict
+                except Exception:
+                    break
 
         fallback_claim = self.generate_deterministic_fallback(user_prompt, receipts, current_verdict)
         return ActionResult(

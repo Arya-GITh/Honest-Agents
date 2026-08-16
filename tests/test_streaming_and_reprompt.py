@@ -187,3 +187,23 @@ async def test_dual_channel_stream_manager_fast_path():
         delivered_chunks.append(chunk)
 
     assert "".join(delivered_chunks) == "Here is the weather: Sunny."
+
+
+@pytest.mark.asyncio
+async def test_self_correction_loop_callback_exception_failsafe():
+    """Edge Case: If the agent's LLM callback crashes during reprompt, deliver fallback without crashing."""
+    loop = SelfCorrectionLoop()
+    receipt = create_mock_receipt(is_error=True, status_code=500, error_message="Database Lock")
+
+    def crashing_reprompt_callback(feedback: str):
+        raise ConnectionError("LLM API endpoint timeout")
+
+    result = await loop.execute_policy_async(
+        user_prompt="Transfer $100",
+        initial_claim="Transfer confirmed successfully.",
+        receipts=[receipt],
+        reprompt_callback=crashing_reprompt_callback,
+    )
+    assert result.overridden is True
+    assert "System Notice:" in result.delivered_claim
+
