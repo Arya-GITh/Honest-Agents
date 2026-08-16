@@ -1,9 +1,10 @@
+import asyncio
 import functools
 import inspect
 import time
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, Set, TypeVar, Union
 from contextvars import ContextVar
 from pydantic import BaseModel, Field
 
@@ -46,25 +47,51 @@ def register_execution_record(record: ToolExecutionRecord) -> None:
         log.append(record)
 
 
-def _serialize_arg(arg: Any) -> Any:
-    """Best-effort JSON-friendly serialization of tool arguments and outputs."""
+def _serialize_arg(arg: Any, seen: Optional[Set[int]] = None) -> Any:
+    """
+    Safe JSON-friendly serialization of tool arguments and outputs.
+    Handles Pydantic models, datetimes, UUIDs, sets, classes with __dict__,
+    and guards against circular references.
+    """
+    if seen is None:
+        seen = set()
+
     if isinstance(arg, (int, float, str, bool, type(None))):
         return arg
-    if isinstance(arg, (list, tuple)):
-        return [_serialize_arg(item) for item in arg]
-    if isinstance(arg, dict):
-        return {str(k): _serialize_arg(v) for k, v in arg.items()}
-    if hasattr(arg, "model_dump"):  # Pydantic v2
-        try:
-            return arg.model_dump()
-        except Exception:
-            pass
-    if hasattr(arg, "dict"):  # Pydantic v1
-        try:
-            return arg.dict()
-        except Exception:
-            pass
-    return repr(arg)
+
+    if isinstance(arg, (datetime,)):
+        return arg.isoformat()
+
+    if isinstance(arg, (uuid.UUID,)):
+        return str(arg)
+
+    obj_id = id(arg)
+    if obj_id in seen:
+        return f"<CircularReference to {type(arg).__name__}>"
+    seen.add(obj_id)
+
+    try:
+        if isinstance(arg, (list, tuple)):
+            return [_serialize_arg(item, seen) for item in arg]
+        if isinstance(arg, set):
+            return [_serialize_arg(item, seen) for item in sorted(arg, key=str)]
+        if isinstance(arg, dict):
+            return {str(k): _serialize_arg(v, seen) for k, v in arg.items()}
+        if hasattr(arg, "model_dump"):  # Pydantic v2
+            try:
+                return arg.model_dump(mode="json")
+            except Exception:
+                pass
+        if hasattr(arg, "dict"):  # Pydantic v1
+            try:
+                return arg.dict()
+            except Exception:
+                pass
+        if hasattr(arg, "__dict__"):
+            return {str(k): _serialize_arg(v, seen) for k, v in vars(arg).items() if not k.startswith("_")}
+        return repr(arg)
+    finally:
+        seen.remove(obj_id)
 
 
 def audit_tool(
@@ -73,6 +100,7 @@ def audit_tool(
     name: Optional[str] = None,
     error_keypaths: Optional[List[str]] = None,
     secret_key: Optional[Union[str, bytes]] = None,
+    timeout_seconds: Optional[float] = None,
     raise_exceptions: bool = True,
 ) -> Union[F, Callable[[F], F]]:
     """
@@ -82,7 +110,7 @@ def audit_tool(
     @audit_tool
     def my_tool(...): ...
 
-    @audit_tool(name="custom_name", error_keypaths=["data.err_code"])
+    @audit_tool(name="custom_name", error_keypaths=["data.err_code"], timeout_seconds=5.0)
     async def my_async_tool(...): ...
     """
     custom_name: Optional[str] = None
@@ -106,12 +134,16 @@ def audit_tool(
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
                 start_t = time.time()
                 serial_args = [_serialize_arg(a) for a in args]
-                serial_kwargs = {k: _serialize_arg(v) for k, v in kwargs.items()}
+                serial_kwargs = {str(k): _serialize_arg(v) for k, v in kwargs.items()}
                 exec_id = str(uuid.uuid4())
                 iso_ts = datetime.now(timezone.utc).isoformat()
 
                 try:
-                    result = await fn(*args, **kwargs)
+                    if timeout_seconds is not None:
+                        result = await asyncio.wait_for(fn(*args, **kwargs), timeout=timeout_seconds)
+                    else:
+                        result = await fn(*args, **kwargs)
+
                     end_t = time.time()
                     duration = (end_t - start_t) * 1000.0
 
@@ -148,6 +180,7 @@ def audit_tool(
                 except Exception as exc:
                     end_t = time.time()
                     duration = (end_t - start_t) * 1000.0
+                    err_str = str(exc) or repr(exc) or type(exc).__name__
 
                     receipt = HMACReceipt.from_execution(
                         execution_id=exec_id,
@@ -159,7 +192,7 @@ def audit_tool(
                         duration_ms=duration,
                         timestamp=iso_ts,
                         status="error",
-                        error=str(exc),
+                        error=err_str,
                         error_type=type(exc).__name__,
                         normalizer=normalizer,
                         secret_key=secret_key,
@@ -175,7 +208,7 @@ def audit_tool(
                         duration_ms=duration,
                         timestamp=iso_ts,
                         status="error",
-                        error=str(exc),
+                        error=err_str,
                         error_type=type(exc).__name__,
                         receipt=receipt,
                     )
@@ -190,7 +223,7 @@ def audit_tool(
             def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
                 start_t = time.time()
                 serial_args = [_serialize_arg(a) for a in args]
-                serial_kwargs = {k: _serialize_arg(v) for k, v in kwargs.items()}
+                serial_kwargs = {str(k): _serialize_arg(v) for k, v in kwargs.items()}
                 exec_id = str(uuid.uuid4())
                 iso_ts = datetime.now(timezone.utc).isoformat()
 
@@ -232,6 +265,7 @@ def audit_tool(
                 except Exception as exc:
                     end_t = time.time()
                     duration = (end_t - start_t) * 1000.0
+                    err_str = str(exc) or repr(exc) or type(exc).__name__
 
                     receipt = HMACReceipt.from_execution(
                         execution_id=exec_id,
@@ -243,7 +277,7 @@ def audit_tool(
                         duration_ms=duration,
                         timestamp=iso_ts,
                         status="error",
-                        error=str(exc),
+                        error=err_str,
                         error_type=type(exc).__name__,
                         normalizer=normalizer,
                         secret_key=secret_key,
@@ -259,7 +293,7 @@ def audit_tool(
                         duration_ms=duration,
                         timestamp=iso_ts,
                         status="error",
-                        error=str(exc),
+                        error=err_str,
                         error_type=type(exc).__name__,
                         receipt=receipt,
                     )

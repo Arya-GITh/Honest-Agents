@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import MagicMock
+from subprocess import CompletedProcess
 
 from agent_honesty.receipts import (
     FactMatrix,
@@ -41,6 +42,41 @@ def test_normalizer_standard_success():
     assert fm.is_empty is False
     assert "status" in fm.data_keys
     assert fm.payload_sha256 != ""
+
+
+def test_normalizer_nested_empty_containers():
+    """Edge Case: {"status": 200, "data": []} must be recognized as is_empty=True."""
+    normalizer = PayloadNormalizer()
+    fm1 = normalizer.normalize({"status": "ok", "data": []})
+    assert fm1.is_empty is True
+    assert fm1.is_error is False
+
+    fm2 = normalizer.normalize({"statusCode": 200, "items": []})
+    assert fm2.is_empty is True
+
+
+def test_normalizer_string_status_codes_and_string_booleans():
+    """Edge Case: String '500' or string 'false' must be recognized properly."""
+    normalizer = PayloadNormalizer()
+    fm1 = normalizer.normalize({"status_code": "503", "error": "Overloaded"})
+    assert fm1.is_error is True
+    assert fm1.status_code == 503
+
+    fm2 = normalizer.normalize({"success": "false", "message": "Denied"})
+    assert fm2.is_error is True
+
+    fm3 = normalizer.normalize({"ok": "0", "error": "Unauthorized"})
+    assert fm3.is_error is True
+
+
+def test_normalizer_subprocess_returncode():
+    """Edge Case: CLI / Subprocess non-zero returncode."""
+    normalizer = PayloadNormalizer()
+    proc = CompletedProcess(args=["ls", "/nonexistent"], returncode=2, stderr="No such file")
+    fm = normalizer.normalize(proc)
+    assert fm.is_error is True
+    assert fm.status_code == 2
+    assert fm.error_type == "NonZeroExitCode"
 
 
 def test_normalizer_soft_failure_detection():

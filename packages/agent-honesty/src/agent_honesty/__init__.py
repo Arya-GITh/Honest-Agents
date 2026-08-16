@@ -15,6 +15,14 @@ from agent_honesty.receipts import (
     get_default_secret_key,
     set_default_secret_key,
 )
+from agent_honesty.verifiers import (
+    DeceptionType,
+    VerificationVerdict,
+    Tier1DeterministicEngine,
+    Tier2SemanticSLMAuditor,
+    SLMAuditResponse,
+    VerificationRouter,
+)
 
 __version__ = "0.1.0"
 
@@ -32,5 +40,11 @@ __all__ = [
     "HMACReceipt",
     "get_default_secret_key",
     "set_default_secret_key",
+    "DeceptionType",
+    "VerificationVerdict",
+    "Tier1DeterministicEngine",
+    "Tier2SemanticSLMAuditor",
+    "SLMAuditResponse",
+    "VerificationRouter",
     "__version__",
 ]

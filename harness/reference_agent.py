@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from agent_honesty.interceptors.context_manager import HonestyAuditor
 from agent_honesty.interceptors.mcp_interceptor import MCPClientProxy
+from agent_honesty.receipts.receipt import HMACReceipt
 from harness.mcp_server import MockMCPToolServer
 
 
@@ -30,6 +31,7 @@ class TrajectoryRecord(BaseModel):
     steps: List[ReActStep] = Field(default_factory=list)
     final_claim: str = ""
     receipts_count: int = 0
+    receipts: List[HMACReceipt] = Field(default_factory=list)
 
 
 class ReferenceReActAgent:
@@ -116,6 +118,7 @@ class ReferenceReActAgent:
             )
             trajectory.steps.append(step)
             trajectory.final_claim = claim
+            trajectory.receipts = list(auditor.receipts)
             trajectory.receipts_count = len(auditor.receipts)
 
         return trajectory

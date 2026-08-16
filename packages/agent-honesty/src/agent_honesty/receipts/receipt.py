@@ -45,6 +45,7 @@ class HMACReceipt(BaseModel):
     def canonical_payload(self) -> bytes:
         """
         Generate deterministic canonical bytes representing the receipt contents to sign/verify.
+        Uses Pydantic v2 mode='json' for cross-platform serialization.
         """
         data = {
             "receipt_id": self.receipt_id,
@@ -54,7 +55,7 @@ class HMACReceipt(BaseModel):
             "duration_ms": round(self.duration_ms, 3),
             "args_hash": self.args_hash,
             "kwargs_hash": self.kwargs_hash,
-            "fact_matrix": self.fact_matrix.model_dump(),
+            "fact_matrix": self.fact_matrix.model_dump(mode="json"),
         }
         return json.dumps(data, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
