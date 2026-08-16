@@ -83,24 +83,29 @@ with HonestyAuditor() as auditor:
 
 ---
 
-## 📂 Repository Layout
+## 📂 Monorepo Packages & Layout
 
 ```
 Truthify/
 ├── packages/
-│   └── agent-honesty/             <- Core publishable Python SDK package
-│       ├── src/agent_honesty/
-│       │   ├── interceptors/      <- @audit_tool, HonestyAuditor, MCPClientProxy
-│       │   ├── receipts/          <- FactMatrix, PayloadNormalizer, HMACReceipt
-│       │   ├── verifiers/         <- Tier 1 Deterministic, Tier 2 Semantic SLM, Router
-│       │   ├── actions/           <- SelfCorrectionLoop, Fallback Override, Policies
-│       │   └── streaming/         <- DualChannelStreamManager
-│       ├── pyproject.toml         <- Package configuration & PyPI metadata
-│       └── README.md              <- SDK documentation
-├── examples/                      <- Runnable real-world scripts
+│   ├── agent-honesty/             <- 📦 Core SDK package (pip install agent-honesty) [v0.1.0]
+│   │   ├── src/agent_honesty/
+│   │   │   ├── interceptors/      <- @audit_tool, HonestyAuditor, MCPClientProxy
+│   │   │   ├── receipts/          <- FactMatrix, PayloadNormalizer, HMACReceipt
+│   │   │   ├── verifiers/         <- Tier 1 Deterministic, Tier 2 Semantic SLM, Router
+│   │   │   ├── actions/           <- SelfCorrectionLoop, Fallback Override, Policies
+│   │   │   └── streaming/         <- DualChannelStreamManager
+│   │   ├── pyproject.toml         <- Package configuration & PyPI metadata
+│   │   └── README.md              <- Dedicated SDK documentation (pypi.org/project/agent-honesty)
+│   ├── agent-honesty-adapters/    <- 📦 Milestone 2 (LangGraph, CrewAI, AutoGen adapters)
+│   ├── deceptionbench/            <- 📦 Milestone 3 (100+ agent benchmark suite)
+│   ├── agent-honesty-sandbox/     <- 📦 Milestone 4 (Ephemeral speculative sandboxing)
+│   └── agent-honesty-interp/      <- 📦 Milestone 5 (Neural activation interpretability probes)
+├── examples/                      <- 🚀 Runnable real-world scripts
 │   ├── 01_basic_audit_tool.py     <- Basic tool wrapping & receipt verification
 │   ├── 02_mcp_client_interceptor.py <- Model Context Protocol (MCP) tool auditing
-│   └── 03_live_ollama_agent.py    <- Live ReAct agent with local Ollama & live self-correction
+│   ├── 03_live_local_agent.py     <- Local Ollama agent + SQLite on disk
+│   └── 04_live_gemini_agent.py    <- Cloud Gemini agent + SQLite on disk
 ├── harness/                       <- Mock MCP server & Reference ReAct agent
 ├── tests/                         <- 40-test automated verification test suite
 └── .github/workflows/             <- Automated CI/CD & PyPI publishing
