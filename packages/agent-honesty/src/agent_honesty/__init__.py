@@ -23,6 +23,15 @@ from agent_honesty.verifiers import (
     SLMAuditResponse,
     VerificationRouter,
 )
+from agent_honesty.actions import (
+    ActionPolicy,
+    ActionResult,
+    ExecutionIntegrityError,
+    SelfCorrectionLoop,
+)
+from agent_honesty.streaming import (
+    DualChannelStreamManager,
+)
 
 __version__ = "0.1.0"
 
@@ -46,5 +55,10 @@ __all__ = [
     "Tier2SemanticSLMAuditor",
     "SLMAuditResponse",
     "VerificationRouter",
+    "ActionPolicy",
+    "ActionResult",
+    "ExecutionIntegrityError",
+    "SelfCorrectionLoop",
+    "DualChannelStreamManager",
     "__version__",
 ]
