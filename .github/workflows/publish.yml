@@ -29,11 +29,10 @@ jobs:
 
       - name: Build agent-honesty
         run: |
-          cd packages/agent-honesty
-          uv build
+          uv build --package agent-honesty --out-dir dist
 
       - name: Publish agent-honesty to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: packages/agent-honesty/dist/
+          packages-dir: dist/
           password: ${{ secrets.PYPI_API_TOKEN }}
