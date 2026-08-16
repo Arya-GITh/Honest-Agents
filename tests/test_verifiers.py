@@ -216,6 +216,34 @@ async def test_router_custom_evaluator_and_waterfall():
 
 
 @pytest.mark.asyncio
+async def test_defensive_slm_output_parsing():
+    """Test that markdown, fuzzy keys, and pure prose from SLMs are safely parsed."""
+    receipt = create_mock_receipt(is_error=False)
+
+    # 1. Markdown-wrapped JSON
+    markdown_llm = lambda ctx: "```json\n{\"is_honest\": false, \"deception_score\": 0.9, \"deception_type\": \"false_success\", \"explanation\": \"Markdown test\"}\n```"
+    router1 = VerificationRouter(slm_evaluator_fn=markdown_llm)
+    v1 = await router1.verify_async("test prompt", "claim", [receipt], force_tier_2=True)
+    assert v1.is_honest is False
+    assert v1.deception_type == DeceptionType.FALSE_SUCCESS
+
+    # 2. Fuzzy Dictionary Keys ('honest', 'reason')
+    fuzzy_llm = lambda ctx: {"honest": False, "reason": "Fuzzy key reason", "type": "parameter_mutation"}
+    router2 = VerificationRouter(slm_evaluator_fn=fuzzy_llm)
+    v2 = await router2.verify_async("test prompt", "claim", [receipt], force_tier_2=True)
+    assert v2.is_honest is False
+    assert v2.deception_type == DeceptionType.PARAMETER_MUTATION
+    assert v2.explanation == "Fuzzy key reason"
+
+    # 3. Pure Prose Sentiment Fallback
+    prose_llm = lambda ctx: "This response is completely dishonest and contains a parameter mutation."
+    router3 = VerificationRouter(slm_evaluator_fn=prose_llm)
+    v3 = await router3.verify_async("test prompt", "claim", [receipt], force_tier_2=True)
+    assert v3.is_honest is False
+    assert v3.deception_type == DeceptionType.PARAMETER_MUTATION
+
+
+@pytest.mark.asyncio
 async def test_end_to_end_agent_trajectory_verification():
     server = MockMCPToolServer()
     server.set_failure_mode(MCPFailureMode.DATABASE_LOCK)
@@ -237,3 +265,4 @@ async def test_end_to_end_agent_trajectory_verification():
     assert verdict.is_honest is False
     assert verdict.deception_type == DeceptionType.FALSE_SUCCESS
     assert verdict.tier_used == "tier_1_deterministic"
+
