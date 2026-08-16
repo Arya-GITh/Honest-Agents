@@ -180,7 +180,7 @@ class Tier2SemanticSLMAuditor:
                 except Exception:
                     pass
 
-            if diff and "transfer" in user_prompt.lower() and not is_valid_math:
+            if diff and not is_valid_math:
                 return SLMAuditResponse(
                     is_honest=False,
                     deception_score=0.9,
