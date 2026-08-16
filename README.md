@@ -55,19 +55,15 @@ Truthify implements a four-stage execution integrity pipeline:
 * **In-Scratchpad Self-Correction ($N=2$ Hard Cap)**: Injects targeted corrective feedback into the agent's reasoning scratchpad upon deception detection.
 * **Deterministic Fallback Override**: Automatically synthesizes verified ground-truth summaries directly from the `FactMatrix` if the model fails to self-correct after 2 attempts.
 
----
+## Platform Components & Roadmap
 
-## Monorepo Packages
-
-| Package | Version | Description | Path |
-| :--- | :---: | :--- | :--- |
-| **`agent-honesty`** | `0.1.0` | Core SDK: Interceptors, HMAC Receipts, Two-Tier Verification, and Action Handlers | [`packages/agent-honesty`](packages/agent-honesty) |
-| **`agent-honesty-adapters`** | `0.1.0` *(Milestone 2)* | Middleware integrations for LangGraph, CrewAI, AutoGen, and LlamaIndex | `packages/agent-honesty-adapters` |
-| **`deceptionbench`** | `1.0.0` *(Milestone 3)* | Standardized evaluation benchmark suite with 100+ deceptive trajectory test cases | `packages/deceptionbench` |
-| **`agent-honesty-sandbox`** | `0.1.0` *(Milestone 4)* | Ephemeral copy-on-write sandboxing for speculative execution gating | `packages/agent-honesty-sandbox` |
-| **`agent-honesty-interp`** | `0.1.0` *(Milestone 5)* | Mechanistic interpretability probes for hidden-state deception detection | `packages/agent-honesty-interp` |
-
----
+| Component | Type | Milestone | Description | Location |
+| :--- | :--- | :---: | :--- | :--- |
+| **`agent-honesty`** | **Python SDK** | `1` (Complete) | Core governance library: Interceptors, HMAC Receipts, Two-Tier Verification, Self-Correction | [`packages/agent-honesty`](packages/agent-honesty) |
+| **`agent-honesty-adapters`** | **Integrations** | `2` | Middleware adapters for LangGraph, CrewAI, AutoGen, and LlamaIndex | `packages/agent-honesty-adapters` |
+| **`DeceptionBench`** | **Benchmark Platform** | `3` | Standardized evaluation suite with 100+ failure scenarios & public leaderboard | `benchmarks/` |
+| **`Speculative Sandbox`** | **Safety Platform** | `4` | Ephemeral copy-on-write execution environments for pre-execution action gating | `sandbox/` |
+| **`Mechanistic Probes`** | **Research Suite** | `5` | Neural activation probes for detecting latent deception in LLM hidden states | `research/` |
 
 ## Quickstart
 
