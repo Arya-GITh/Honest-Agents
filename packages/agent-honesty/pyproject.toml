@@ -1,9 +1,30 @@
 [project]
 name = "agent-honesty"
 version = "0.1.0"
-description = "Execution integrity and trajectory authenticity middleware for autonomous AI agents"
+description = "Execution integrity and trajectory authenticity governance middleware for autonomous AI agents"
 readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+keywords = [
+    "ai-agents",
+    "execution-integrity",
+    "hallucination-detection",
+    "llm-guardrails",
+    "mcp",
+    "model-context-protocol",
+    "react-agents",
+    "verification",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Security",
+]
 authors = [
     { name = "Truthify Team" }
 ]
@@ -12,6 +33,11 @@ dependencies = [
     "pydantic>=2.5.0",
     "mcp>=1.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Arya-GITh/Truthify"
+Repository = "https://github.com/Arya-GITh/Truthify.git"
+Issues = "https://github.com/Arya-GITh/Truthify/issues"
 
 [project.optional-dependencies]
 dev = [
