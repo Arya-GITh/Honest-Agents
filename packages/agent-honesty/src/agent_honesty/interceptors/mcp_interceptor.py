@@ -286,10 +286,16 @@ class MCPClientProxy:
 
         async def _invoke(**tool_args: Any) -> Any:
             if hasattr(self._client, "call_tool"):
-                return await self._client.call_tool(name=name, arguments=tool_args, **kwargs)
+                target = getattr(self._client, "call_tool")
             elif callable(self._client):
-                return await self._client(name=name, arguments=tool_args, **kwargs)
-            raise AttributeError("Wrapped MCP client does not have a callable call_tool method.")
+                target = self._client
+            else:
+                raise AttributeError("Wrapped MCP client does not have a callable call_tool method.")
+
+            res = target(name=name, arguments=tool_args, **kwargs)
+            if inspect.isawaitable(res):
+                return await res
+            return res
 
         return await intercept_mcp_call_async(
             tool_name=name,
