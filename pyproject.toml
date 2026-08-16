@@ -12,3 +12,7 @@ package = false
 members = [
     "packages/*",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
