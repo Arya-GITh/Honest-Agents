@@ -103,6 +103,27 @@ result = await reprompter.execute_policy_async(
 print(result.delivered_claim)
 ```
 
+### 4. Framework Adapters (LangGraph, CrewAI, AutoGen, LlamaIndex)
+
+```python
+# LangGraph: Drop-in replacement for ToolNode
+from agent_honesty.adapters.langgraph import TruthifyToolNode, TruthifyGraphEvaluator
+workflow.add_node("tools", TruthifyToolNode(tools=[my_tool]))
+
+# CrewAI: Hierarchical multi-agent delegation callback
+from agent_honesty.adapters.crewai import TruthifyCrewCallback
+crew = Crew(agents=[agent1, agent2], tasks=[task1], step_callback=TruthifyCrewCallback())
+
+# AutoGen: Message interceptor and function map auditor
+from agent_honesty.adapters.autogen import TruthifyAgentInterceptor
+interceptor = TruthifyAgentInterceptor()
+interceptor.register(user_proxy, assistant_agent)
+
+# LlamaIndex: Tool wrapper for ReActAgent and FunctionTools
+from agent_honesty.adapters.llamaindex import wrap_llama_tools
+wrapped_tools, adapter = wrap_llama_tools([query_tool, sql_tool])
+```
+
 ---
 
 ## Deception Modes Detected

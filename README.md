@@ -111,8 +111,10 @@ The [`examples/`](examples/) directory contains standalone, reproducible impleme
 
 * **[`01_basic_audit_tool.py`](examples/01_basic_audit_tool.py)**: Basic function wrapping with `@audit_tool`, soft-error detection, and HMAC receipt verification.
 * **[`02_mcp_client_interceptor.py`](examples/02_mcp_client_interceptor.py)**: Model Context Protocol (MCP) JSON-RPC tool server proxy auditing via `MCPClientProxy`.
-* **[`03_live_local_agent.py`](examples/03_live_local_agent.py)**: Autonomous local agent using Ollama (`qwen3:latest` primary + `qwen2.5:0.5b` SLM judge) with a live SQLite database.
-* **[`04_live_gemini_agent.py`](examples/04_live_gemini_agent.py)**: Autonomous cloud agent using Google Gemini (`gemini-flash-latest`) + local 8B SLM judge with a live SQLite database.
+* **[`03_live_local_agent.py`](examples/03_live_local_agent.py)**: Autonomous local agent using Ollama (`qwen3:latest` primary + `qwen2.5:0.5b` SLM judge) with a live SQLite database on physical disk.
+* **[`04_live_gemini_agent.py`](examples/04_live_gemini_agent.py)**: Autonomous cloud agent using Google Gemini (`gemini-flash-latest`) + local 8B SLM judge with a live SQLite database on physical disk.
+* **[`05_langgraph_agent.py`](examples/05_langgraph_agent.py)**: LangGraph state graph agent with `TruthifyToolNode` and `TruthifyGraphEvaluator`.
+* **[`06_crewai_agent.py`](examples/06_crewai_agent.py)**: CrewAI multi-agent crew with `TruthifyCrewCallback` and `wrap_crew_tool`.
 
 ---
 
@@ -123,15 +125,14 @@ The [`examples/`](examples/) directory contains standalone, reproducible impleme
   - Normalized `FactMatrix` & HMAC-SHA256 Cryptographic Receipts
   - Two-Tier Verification Engine (Tier 1 Deterministic + Tier 2 Semantic SLM)
   - Dual-Channel Streaming, $N=2$ Scratchpad Reprompting, and Fallback Overrides
-- [ ] **Milestone 2: Multi-Framework Adapters (`agent-honesty-adapters`)**
-  - Native integration hooks for LangGraph, CrewAI, AutoGen, and LlamaIndex
-- [ ] **Milestone 3: Evaluation Suite (`deceptionbench`)**
+- [x] **Milestone 2: Multi-Framework Adapters (`agent_honesty.adapters`)**
+  - Native integration hooks for LangGraph (`TruthifyToolNode`), CrewAI (`TruthifyCrewCallback`), AutoGen (`TruthifyAgentInterceptor`), and LlamaIndex (`wrap_llama_tools`)
+- [ ] **Milestone 3: Evaluation Suite (`DeceptionBench`)**
   - Standardized benchmark with 100+ failure modes, soft-errors, and deceptive trajectories
-- [ ] **Milestone 4: Speculative Sandboxing (`agent-honesty-sandbox`)**
+- [ ] **Milestone 4: Speculative Sandboxing (`Speculative Sandbox`)**
   - Isolated ephemeral copy-on-write environments for pre-execution action gating
-- [ ] **Milestone 5: Mechanistic Probing (`agent-honesty-interp`)**
+- [ ] **Milestone 5: Mechanistic Probing (`Mechanistic Probes`)**
   - Neural activation probes for internal representation monitoring
-
 ---
 
 ## Development
