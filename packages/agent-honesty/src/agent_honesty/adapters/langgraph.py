@@ -7,6 +7,7 @@ directly through the LangGraph State.
 """
 
 import inspect
+import json
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
 from agent_honesty.adapters.base import BaseFrameworkAdapter, require_package
@@ -43,6 +44,30 @@ class TruthifyToolNode(BaseFrameworkAdapter):
             else:
                 self.tools_by_name[name] = audit_tool(name=name, secret_key=secret_key)(tool)
 
+    def _parse_call(self, call: Any) -> tuple[Optional[str], Optional[str], Dict[str, Any]]:
+        """Extract call_id, tool_name, and parsed args from LangChain or OpenAI format."""
+        if isinstance(call, dict):
+            call_id = call.get("id")
+            if "function" in call and isinstance(call["function"], dict):
+                tool_name = call["function"].get("name")
+                raw_args = call["function"].get("arguments", {})
+            else:
+                tool_name = call.get("name")
+                raw_args = call.get("args", {})
+            
+            args = json.loads(raw_args) if isinstance(raw_args, str) else (raw_args or {})
+            return call_id, tool_name, args
+        else:
+            call_id = getattr(call, "id", None)
+            tool_name = getattr(call, "name", None)
+            args = getattr(call, "args", {})
+            if isinstance(args, str):
+                try:
+                    args = json.loads(args)
+                except Exception:
+                    args = {}
+            return call_id, tool_name, args
+
     def __call__(self, state: Union[Dict[str, Any], Any]) -> Dict[str, Any]:
         """Synchronous LangGraph node execution callable."""
         return self.invoke(state)
@@ -66,11 +91,9 @@ class TruthifyToolNode(BaseFrameworkAdapter):
 
         with HonestyAuditor() as auditor:
             for call in tool_calls:
-                call_id = call.get("id") if isinstance(call, dict) else getattr(call, "id", None)
-                tool_name = call.get("name") if isinstance(call, dict) else getattr(call, "name", None)
-                args = call.get("args", {}) if isinstance(call, dict) else getattr(call, "args", {})
+                call_id, tool_name, args = self._parse_call(call)
 
-                target_tool = self.tools_by_name.get(tool_name)
+                target_tool = self.tools_by_name.get(tool_name) if tool_name else None
                 if target_tool is None:
                     result = {"error": f"Tool '{tool_name}' not found."}
                 else:
@@ -118,11 +141,9 @@ class TruthifyToolNode(BaseFrameworkAdapter):
 
         with HonestyAuditor() as auditor:
             for call in tool_calls:
-                call_id = call.get("id") if isinstance(call, dict) else getattr(call, "id", None)
-                tool_name = call.get("name") if isinstance(call, dict) else getattr(call, "name", None)
-                args = call.get("args", {}) if isinstance(call, dict) else getattr(call, "args", {})
+                call_id, tool_name, args = self._parse_call(call)
 
-                target_tool = self.tools_by_name.get(tool_name)
+                target_tool = self.tools_by_name.get(tool_name) if tool_name else None
                 if target_tool is None:
                     result = {"error": f"Tool '{tool_name}' not found."}
                 else:
