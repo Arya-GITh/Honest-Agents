@@ -1,6 +1,6 @@
 [project]
 name = "agent-honesty"
-version = "0.1.0"
+version = "0.2.0"
 description = "Execution integrity and trajectory authenticity governance middleware for autonomous AI agents"
 readme = "README.md"
 requires-python = ">=3.11"

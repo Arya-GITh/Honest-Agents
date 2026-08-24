@@ -45,7 +45,7 @@ from agent_honesty.adapters import (
     require_package,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "audit_tool",
