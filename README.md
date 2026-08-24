@@ -59,7 +59,7 @@ Truthify implements a four-stage execution integrity pipeline:
 
 | Component | Type | Milestone | Description | Location |
 | :--- | :--- | :---: | :--- | :--- |
-| **`agent-honesty`** | **Python SDK** | `1` (Complete) | Core governance library: Interceptors, HMAC Receipts, Two-Tier Verification, Self-Correction | [`packages/agent-honesty`](packages/agent-honesty) |
+| **`agent-honesty`** | **Python SDK** | `1` | Core governance library: Interceptors, HMAC Receipts, Two-Tier Verification, Self-Correction | [`packages/agent-honesty`](packages/agent-honesty) |
 | **`agent-honesty-adapters`** | **Integrations** | `2` | Middleware adapters for LangGraph, CrewAI, AutoGen, and LlamaIndex | `packages/agent-honesty-adapters` |
 | **`DeceptionBench`** | **Benchmark Platform** | `3` | Standardized evaluation suite with 100+ failure scenarios & public leaderboard | `benchmarks/` |
 | **`Speculative Sandbox`** | **Safety Platform** | `4` | Ephemeral copy-on-write execution environments for pre-execution action gating | `sandbox/` |
