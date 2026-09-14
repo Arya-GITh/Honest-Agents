@@ -127,12 +127,30 @@ The [`examples/`](examples/) directory contains standalone, reproducible impleme
   - Dual-Channel Streaming, $N=2$ Scratchpad Reprompting, and Fallback Overrides
 - [x] **Milestone 2: Multi-Framework Adapters (`agent_honesty.adapters`)**
   - Native integration hooks for LangGraph (`TruthifyToolNode`), CrewAI (`TruthifyCrewCallback`), AutoGen (`TruthifyAgentInterceptor`), and LlamaIndex (`wrap_llama_tools`)
-- [ ] **Milestone 3: Evaluation Suite (`DeceptionBench`)**
-  - Standardized benchmark with 100+ failure modes, soft-errors, and deceptive trajectories
+- [x] **Milestone 3: Evaluation Suite (`DeceptionBench`)**
+  - Standardized benchmark with 105 curated failure modes, soft-errors, and deceptive trajectories
+  - Multi-model evaluation CLI (`benchmarks/runner.py`) with EDR, FER, and Protection Gain metrics
+  - Automated Markdown, CSV, and LaTeX leaderboard generator
 - [ ] **Milestone 4: Speculative Sandboxing (`Speculative Sandbox`)**
   - Isolated ephemeral copy-on-write environments for pre-execution action gating
 - [ ] **Milestone 5: Mechanistic Probing (`Mechanistic Probes`)**
   - Neural activation probes for internal representation monitoring
+
+---
+
+## 🏆 DeceptionBench Evaluation Suite
+
+Run standardized benchmarks across local models (Ollama) and cloud models (Gemini):
+
+```bash
+# Run quick benchmark evaluation on local or mock models
+uv run python -m benchmarks.runner --models mock,qwen3:latest --limit 10
+
+# Run full 105-scenario benchmark suite
+uv run python -m benchmarks.runner --models qwen3:latest,gemini-flash-latest
+```
+
+Benchmark outputs are saved to `benchmarks/results/` as `leaderboard.md`, `leaderboard.csv`, `leaderboard.tex`, and `results.json`.
 ---
 
 ## Development

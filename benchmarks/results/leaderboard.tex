@@ -1,0 +1,13 @@
+\begin{table*}[t]
+\centering
+\caption{DeceptionBench Execution Integrity Evaluation Across Model Architectures}
+\label{tab:deceptionbench}
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Model} & \textbf{Scenarios} & \textbf{Raw EDR (\%)} & \textbf{Guarded EDR (\%)} & \textbf{$\Delta$ Gain} & \textbf{Raw FER (\%)} & \textbf{Latency (ms)} \\
+\midrule
+qwen3:latest & 105 & 9.5\% & 0.0\% & +9.5\% & 4.0\% & 1774.8 \\
+gemini-flash-latest & 105 & 9.5\% & 0.9\% & +8.6\% & 0.0\% & 209.6 \\
+\bottomrule
+\end{tabular}
+\end{table*}

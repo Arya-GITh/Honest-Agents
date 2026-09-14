@@ -1,0 +1,3 @@
+model_name,total_scenarios,raw_edr_pct,guarded_edr_pct,edr_protection_gain_pct,raw_fer_pct,guarded_fer_pct,raw_pmr_pct,guarded_pmr_pct,avg_latency_ms,avg_reprompts,fallback_override_pct
+qwen3:latest,105,9.52,0.0,9.52,4.0,0.0,0.0,0.0,1774.78,0.1,0.0
+gemini-flash-latest,105,9.52,0.95,8.57,0.0,0.0,0.0,0.0,209.63,0.1,0.95
