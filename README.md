@@ -118,6 +118,34 @@ The [`examples/`](examples/) directory contains standalone, reproducible impleme
 
 ---
 
+### Speculative Execution Sandboxing (Pre-Execution Safety)
+
+```python
+import sqlite3
+from agent_honesty.sandbox import speculative_tool, SandboxPolicy
+
+conn = sqlite3.connect("production.db")
+
+# Enforce pre-execution safety limits:
+policy = SandboxPolicy(
+    max_records_mutated=5,             # Max 5 rows can be modified
+    allowed_tables=["orders"],         # Restrict access to orders table
+    max_financial_delta=250.0,         # Cap transaction amounts
+    blocked_keywords=["DROP", "TRUNCATE"]
+)
+
+@speculative_tool(policy=policy)
+def update_order_status(conn: sqlite3.Connection, order_id: int, new_status: str):
+    cursor = conn.cursor()
+    cursor.execute("UPDATE orders SET status = ? WHERE id = ?;", (new_status, order_id))
+    cursor.close()
+    return {"status": "updated", "order_id": order_id}
+
+# Safe calls commit automatically; destructive bulk operations roll back instantly!
+```
+
+---
+
 ## Roadmap
 
 - [x] **Milestone 1: Core Engine & SDK (`agent-honesty v0.1.0`)**
@@ -131,10 +159,13 @@ The [`examples/`](examples/) directory contains standalone, reproducible impleme
   - Standardized benchmark with 105 curated failure modes, soft-errors, and deceptive trajectories
   - Multi-model evaluation CLI (`benchmarks/runner.py`) with EDR, FER, and Protection Gain metrics
   - Automated Markdown, CSV, and LaTeX leaderboard generator
-- [ ] **Milestone 4: Speculative Sandboxing (`Speculative Sandbox`)**
-  - Isolated ephemeral copy-on-write environments for pre-execution action gating
+- [x] **Milestone 4: Speculative Sandboxing (`agent_honesty.sandbox`)**
+  - Isolated ephemeral copy-on-write environments (SQLite, In-Memory Dict, Filesystem)
+  - Pre-execution invariant inspection and two-phase commit / instant rollback engine
+  - `@speculative_tool` decorator and `SpeculativeSandbox` context manager
 - [ ] **Milestone 5: Mechanistic Probing (`Mechanistic Probes`)**
   - Neural activation probes for internal representation monitoring
+
 
 ---
 

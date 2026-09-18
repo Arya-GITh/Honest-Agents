@@ -77,6 +77,23 @@ name = "agent-honesty-monorepo"
 version = "0.1.0"
 source = { virtual = "." }
 
+[package.optional-dependencies]
+dev = [
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.25.0" },
+    { name = "pydantic", marker = "extra == 'dev'", specifier = ">=2.5.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23.0" },
+]
+provides-extras = ["dev"]
+
 [[package]]
 name = "aiofiles"
 version = "24.1.0"

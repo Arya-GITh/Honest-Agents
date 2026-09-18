@@ -44,6 +44,20 @@ from agent_honesty.adapters import (
     wrap_llama_tools,
     require_package,
 )
+from agent_honesty.sandbox import (
+    SpeculativeSandbox,
+    speculative_tool,
+    SandboxPolicy,
+    StateDelta,
+    SandboxVerdict,
+    DryRunReceipt,
+    InvariantViolationError,
+    StateDeltaInspector,
+    BaseSandboxEnvironment,
+    SQLiteSandbox,
+    DictStateSandbox,
+    EphemeralFileSystemSandbox,
+)
 
 __version__ = "0.2.0"
 
@@ -82,5 +96,18 @@ __all__ = [
     "TruthifyLlamaToolWrapper",
     "wrap_llama_tools",
     "require_package",
+    "SpeculativeSandbox",
+    "speculative_tool",
+    "SandboxPolicy",
+    "StateDelta",
+    "SandboxVerdict",
+    "DryRunReceipt",
+    "InvariantViolationError",
+    "StateDeltaInspector",
+    "BaseSandboxEnvironment",
+    "SQLiteSandbox",
+    "DictStateSandbox",
+    "EphemeralFileSystemSandbox",
     "__version__",
 ]
+
