@@ -236,3 +236,88 @@ async def test_async_semantic_judge_hook():
     # Rolled back
     assert state["a"] == 1
     assert state["b"] == 2
+
+
+def test_unhandled_exception_rollback(sqlite_db):
+    """Verify that an unhandled Python exception inside the sandbox triggers immediate rollback."""
+    env = SQLiteSandbox(sqlite_db)
+    policy = SandboxPolicy(max_records_mutated=10)
+
+    with pytest.raises(RuntimeError) as exc_info:
+        with SpeculativeSandbox(environment=env, policy=policy):
+            cursor = sqlite_db.cursor()
+            cursor.execute("UPDATE users SET balance = 0.0 WHERE id = 1;")
+            cursor.close()
+            raise RuntimeError("Database connection interrupted during action!")
+
+    assert "Database connection interrupted" in str(exc_info.value)
+
+    # Verify Alice's balance was not left at 0.0
+    cursor = sqlite_db.cursor()
+    cursor.execute("SELECT balance FROM users WHERE id = 1;")
+    balance = cursor.fetchone()[0]
+    cursor.close()
+
+    assert balance == 500.0
+
+
+def test_blocked_table_blacklist(sqlite_db):
+    """Verify that attempting to touch a blacklisted table is blocked."""
+    cursor = sqlite_db.cursor()
+    cursor.execute("CREATE TABLE auth_tokens (id INTEGER PRIMARY KEY, token TEXT);")
+    cursor.execute("INSERT INTO auth_tokens (id, token) VALUES (1, 'secret_token');")
+    sqlite_db.commit()
+    cursor.close()
+
+    env = SQLiteSandbox(sqlite_db)
+    policy = SandboxPolicy(blocked_tables=["auth_tokens"])
+
+    with pytest.raises(InvariantViolationError) as exc_info:
+        with SpeculativeSandbox(environment=env, policy=policy):
+            cursor = sqlite_db.cursor()
+            cursor.execute("UPDATE auth_tokens SET token = 'compromised' WHERE id = 1;")
+            cursor.close()
+
+    assert "is in blocked_tables blacklist" in str(exc_info.value)
+
+    # Verify token remained untouched
+    cursor = sqlite_db.cursor()
+    cursor.execute("SELECT token FROM auth_tokens WHERE id = 1;")
+    token = cursor.fetchone()[0]
+    cursor.close()
+
+    assert token == "secret_token"
+
+
+def test_read_only_policy(sqlite_db):
+    """Verify that a read-only policy strictly forbids any state change."""
+    env = SQLiteSandbox(sqlite_db)
+    policy = SandboxPolicy(read_only=True)
+
+    with pytest.raises(InvariantViolationError) as exc_info:
+        with SpeculativeSandbox(environment=env, policy=policy):
+            cursor = sqlite_db.cursor()
+            cursor.execute("INSERT INTO users (id, name, balance) VALUES (99, 'Test', 10.0);")
+            cursor.close()
+
+    assert "Policy is read-only" in str(exc_info.value)
+
+
+def test_custom_validator_string_error():
+    """Verify custom validator returning error message string."""
+    def only_even_values(delta):
+        if delta.financial_delta % 2 != 0:
+            return "Financial transfer amount must be an even integer."
+        return True
+
+    state = {"balance": 100.0}
+    env = DictStateSandbox(state)
+    policy = SandboxPolicy(custom_validator=only_even_values)
+
+    with pytest.raises(InvariantViolationError) as exc_info:
+        with SpeculativeSandbox(environment=env, policy=policy):
+            state["balance"] += 3.0 # Odd delta = 3.0
+
+    assert "Financial transfer amount must be an even integer" in str(exc_info.value)
+    assert state["balance"] == 100.0
+
