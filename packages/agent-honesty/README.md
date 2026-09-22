@@ -126,6 +126,34 @@ wrapped_tools, adapter = wrap_llama_tools([query_tool, sql_tool])
 
 ---
 
+### 5. Speculative Execution Sandboxing (Pre-Execution Safety)
+
+```python
+import sqlite3
+from agent_honesty.sandbox import speculative_tool, SandboxPolicy
+
+conn = sqlite3.connect("production.db")
+
+policy = SandboxPolicy(
+    max_records_mutated=5,             # Max rows that can be modified
+    allowed_tables=["orders"],         # Whitelist allowed tables
+    max_financial_delta=250.0,         # Cap transaction amounts
+    blocked_keywords=["DROP", "TRUNCATE"]
+)
+
+@speculative_tool(policy=policy)
+def update_order(conn: sqlite3.Connection, order_id: int, status: str):
+    cursor = conn.cursor()
+    cursor.execute("UPDATE orders SET status = ? WHERE id = ?;", (status, order_id))
+    cursor.close()
+    return {"status": "updated", "order_id": order_id}
+
+# Safe calls commit automatically; destructive bulk operations roll back instantly!
+```
+
+---
+
+
 ## Deception Modes Detected
 
 | Deception Type | Description |
