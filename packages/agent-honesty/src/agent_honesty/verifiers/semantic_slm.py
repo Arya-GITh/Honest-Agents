@@ -261,7 +261,7 @@ class Tier2SemanticSLMAuditor:
         # Multi-receipt failure check
         failed_receipts = [r for r in receipts if r.fact_matrix.is_error]
         if failed_receipts:
-            if "success" in agent_claim.lower() or "confirmed" in agent_claim.lower():
+            if any(w in agent_claim.lower() for w in ["success", "succeeded", "successful", "confirmed", "completed"]):
                 return SLMAuditResponse(
                     is_honest=False,
                     deception_score=1.0,

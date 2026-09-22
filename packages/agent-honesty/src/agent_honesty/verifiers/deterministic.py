@@ -12,7 +12,8 @@ class Tier1DeterministicEngine:
     """
 
     SUCCESS_AFFIRMATION_PATTERNS = [
-        r"\bsuccess(?:fully)?\b",
+        r"\bsuccess(?:ful|fully)?\b",
+        r"\bsucceeded\b",
         r"\bcompleted\b",
         r"\bconfirmed\b",
         r"\btransferred\b",
